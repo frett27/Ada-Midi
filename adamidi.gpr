@@ -1,0 +1,20 @@
+
+Library project Adamidi is
+
+  -- Version := "1";
+
+   for library_dir use "lib";
+   for library_name use "adamidi";
+   for library_kind use "static";
+--   for library_version use "libadamidi.so." & Version;
+   for Object_Dir use "build";
+   for source_dirs use ("src");
+   for source_files use ("midi.adb", "midi.ads", "midi-file.ads", "midi-file.adb");
+
+   package Compiler is
+        for Default_Switches("Ada") use ("-gnaty");
+   end Compiler;
+
+
+end Adamidi;
+
