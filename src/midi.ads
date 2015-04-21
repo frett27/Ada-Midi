@@ -28,7 +28,7 @@ with Ada.Finalization;
 package Midi is
 
    type Byte is range 0 .. 255;
-   for Byte'size use 8;
+   for Byte'Size use 8;
 
    type Byte_Array is array (Positive range <>) of Byte;
    type Byte_Array_Access is access Byte_Array;
@@ -39,35 +39,35 @@ package Midi is
 
    type EventType is (MIDIEvent, MetaEvent, SysEvent);
 
-   type MidiCmd is (NoteON,
-                    NoteOFF,
-                    AfterTouch,
-                    ControlChange,
-                    ProgramChange,
-                    ChannelAfterTouch,
-                    PitchRange);
+   type MidiCmd is
+     (NoteON,
+      NoteOFF,
+      AfterTouch,
+      ControlChange,
+      ProgramChange,
+      ChannelAfterTouch,
+      PitchRange);
 
    type ChannelType is range 0 .. 15;
 
-   type Integer_24 is range 0..2**24-1;
+   type Integer_24 is range 0 .. 2**24 - 1;
    for Integer_24'Size use 24;
 
-   type Event (ET : EventType) is new Ada.Finalization.Controlled
-     with record
+   type Event (ET : EventType) is new Ada.Finalization.Controlled with record
       Ticks : Natural;
-      Data : Byte_Array_Access; -- Command Datas
+      Data  : Byte_Array_Access; -- Command Datas
       case ET is
          when MIDIEvent =>
             Channel : ChannelType;
-            Cmd : MidiCmd;
+            Cmd     : MidiCmd;
          when MetaEvent =>  -- FF Messages
             Service : Byte;
          when SysEvent =>  -- F0 F7 Messages
             null;
       end case;
-     end record;
+   end record;
 
-   type Event_Handler is access procedure (E : in Event);
+   type Event_Handler is access procedure (E : Event);
 
    Invalid_HeaderChunk : exception;
    Invalid_Function : exception;
@@ -77,43 +77,43 @@ package Midi is
    --  Parse a Chunk, and send events to the Event_handler
    --  if Event_handler is null, parse is done, but handler is
    --  not called.
-   procedure Parse (C : in Chunk; EH : in Event_Handler);
+   procedure Parse (C : Chunk; EH : Event_Handler);
 
    --  Managing chunck structure
    procedure Initialize (O : in out Chunk);
    procedure Adjust (O : in out Chunk);
    procedure Finalize (O : in out Chunk);
 
-
-   procedure AddEvent (C : in out Chunk; E : in Event'Class);
-
+   procedure AddEvent (C : in out Chunk; E : Event'Class);
 
    --  event handling
    procedure Initialize (O : in out Event);
    procedure Adjust (O : in out Event);
    procedure Finalize (O : in out Event);
 
-
-   function ToByteArray (O : in Event) return Byte_Array;
+   function ToByteArray (O : Event) return Byte_Array;
 
    subtype Note is Byte range 0 .. 127;
    subtype Vel is Byte range 0 .. 127;
 
    --  event creation helper methods
-   function Create_Note_Event (Ticks : Natural;
-                               Channel : ChannelType;
-                               Note  : Midi.Note;
-                               Status : Boolean; -- on/off
-                               Velocity : Midi.Vel) return Event;
+   function Create_Note_Event
+     (Ticks    : Natural;
+      Channel  : ChannelType;
+      Note     : Midi.Note;
+      Status   : Boolean; -- on/off
+      Velocity : Midi.Vel) return Event;
 
    function Create_EOF_Track_Event return Event;
 
-   function Create_Tempo_Event(Ticks : Natural;
-                               MicroPerQuarter : Integer_24 ) return Event;
+   function Create_Tempo_Event
+     (Ticks           : Natural;
+      MicroPerQuarter : Integer_24) return Event;
 
-   function Create_Program_Change_Event(Ticks : Natural;
-                                        Channel : ChannelType;
-                                        NewProgram : Byte) return Event;
+   function Create_Program_Change_Event
+     (Ticks      : Natural;
+      Channel    : ChannelType;
+      NewProgram : Byte) return Event;
 
 private
 
@@ -122,10 +122,8 @@ private
    type Chunk is new Ada.Finalization.Controlled with record
       --  by default, it's a music track ..
       ChunkType : String (1 .. 4) := "MTrk";
-      Length : Natural; -- Data Length
-      Data : Byte_Array_Access;
+      Length    : Natural; -- Data Length
+      Data      : Byte_Array_Access;
    end record;
-
-
 
 end Midi;

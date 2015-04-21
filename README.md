@@ -1,7 +1,16 @@
 Ada-Midi
 ========
 
-Implementation of Midi / MidiFile reading and writing
+*Patrice Freydiere - 2003 - Avril 2015*
+
+
+
+Implementation of Midi / MidiFile reading and writing, event generation.
+
+## Features
+
+This project propose a Midi Event parser, for reading, generating midifile.
+
 
 ## Install - Compile ##
 

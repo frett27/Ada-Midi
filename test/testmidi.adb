@@ -1,4 +1,3 @@
-
 ------------------------------------------------------------------------------
 --                                 Ada Midi                                 --
 --                                                                          --
@@ -26,11 +25,9 @@
 
 --- ada midi test program
 
-
 with Midi;
 with Midi.File;
-with Text_IO;
-use Text_IO;
+with Text_IO; use Text_IO;
 
 --  using Gnat Extension for file Reading
 with GNAT.Directory_Operations;
@@ -39,23 +36,26 @@ with Ada.Exceptions;
 --  Midi Parsing/Writing test procedure
 procedure Testmidi is
 
-   procedure Log_To_Screen(S : String) is
+   procedure Log_To_Screen (S : String) is
    begin
-	Text_IO.Put(S);
-   end;
-
+      Text_IO.Put (S);
+   end Log_To_Screen;
 
    --  Reading Test Procedure
    procedure TestMidiFileReading (Verbose : Boolean) is
       use GNAT.Directory_Operations;
-      Dir : Dir_Type;
+      Dir     : Dir_Type;
       DirName : String (1 .. 1000);
-      Len : Natural;
-      M : Midi.File.Midifile;
-      C : Midi.Chunk;
+      Len     : Natural;
+      M       : Midi.File.Midifile;
+      C       : Midi.Chunk;
 
-	Log_To_String_Function : Midi.File.Log_Out_Function := Log_To_Screen'Unrestricted_Access;
-	procedure Midi_Dump is new Midi.File.Dump_To_Screen(F => Log_To_String_Function);
+      Log_To_String_Function : Midi.File.Log_Out_Function :=
+        Log_To_Screen'Unrestricted_Access;
+
+      procedure Midi_Dump is new Midi.File.Dump_To_Screen
+        (F => Log_To_String_Function);
+
    begin
       if Verbose then
          Text_IO.Put_Line ("Verbose Mode activated");
@@ -81,8 +81,9 @@ procedure Testmidi is
                begin
 
                   M := Midi.File.Read (DirName (1 .. Len));
-                  Text_IO.Put (" numbers of tracks "
-                              & Natural'Image (Midi.File.GetTrackCount (M)));
+                  Text_IO.Put
+                    (" numbers of tracks " &
+                     Natural'Image (Midi.File.GetTrackCount (M)));
 
                   Text_IO.New_Line;
 
@@ -93,8 +94,9 @@ procedure Testmidi is
 
                         --  Using default, Dump_to_Screen Procedure
 
-                        Midi.Parse (Midi.File.GetChunk (M, I),
-                                    Midi_Dump'Unrestricted_Access);
+                        Midi.Parse
+                          (Midi.File.GetChunk (M, I),
+                           Midi_Dump'Unrestricted_Access);
 
                      else
                         --  no parsing informations
@@ -105,20 +107,22 @@ procedure Testmidi is
                   end loop;
 
                   --  OK, then write the midi file back
-                  Text_IO.Put_Line ("Writing  the midi file back ... "
-                                    & "BAK_" & DirName (1 .. Len));
+                  Text_IO.Put_Line
+                    ("Writing  the midi file back ... " &
+                     "BAK_" &
+                     DirName (1 .. Len));
                   Midi.File.Write (M, "BAK_" & DirName (1 .. Len));
 
                exception
-                  when Error : others  =>
+                  when Error : others =>
                      Put_Line ("Error while parsing " & DirName (1 .. Len));
-                     Put_Line ("Error :"
-                               & Ada.Exceptions.Exception_Information (Error));
+                     Put_Line
+                       ("Error :" &
+                        Ada.Exceptions.Exception_Information (Error));
                end;
 
             end if;
          end if;
-
 
       end loop;
       Put_Line ("End of directory");
@@ -126,7 +130,6 @@ procedure Testmidi is
       Close (Dir);
 
    end TestMidiFileReading;
-
 
    procedure Print_HexEvent (E : in Midi.Event) is
       Ba : Midi.Byte_Array := Midi.ToByteArray (E);
@@ -140,31 +143,33 @@ procedure Testmidi is
 
    end Print_HexEvent;
 
-
    procedure TestMidiFileCreation is
       --  Création d'un chunk
-      C : Midi.Chunk;
-      M2 : Midi.File.Midifile;
+      C   : Midi.Chunk;
+      M2  : Midi.File.Midifile;
       EOF : Midi.Event (Midi.MetaEvent);
    begin
       Text_IO.Put_Line ("Adding a new Event ..");
 
-      Midi.AddEvent (C, Midi.Create_Note_Event (Ticks => 0,
-                                                Channel => 0,
-                                                Note => 60,
-                                                Velocity => 127,
-                                                Status => True));
+      Midi.AddEvent
+        (C,
+         Midi.Create_Note_Event
+           (Ticks    => 0,
+            Channel  => 0,
+            Note     => 60,
+            Velocity => 127,
+            Status   => True));
 
-      Midi.AddEvent (C, Midi.Create_Note_Event (Ticks => 1000,
-                                                Channel => 0,
-                                                Note => 60,
-                                                Velocity => 127,
-                                                Status => False));
-
-
+      Midi.AddEvent
+        (C,
+         Midi.Create_Note_Event
+           (Ticks    => 1000,
+            Channel  => 0,
+            Note     => 60,
+            Velocity => 127,
+            Status   => False));
 
       Midi.AddEvent (C, Midi.Create_EOF_Track_Event);
-
 
       Text_IO.Put_Line ("Adding chunk ..");
 
@@ -175,9 +180,8 @@ procedure Testmidi is
 
    end TestMidiFileCreation;
 
-
-   --- The Midi test program read the directory and parse all midi files.
-   --- Then test the creation of midi events
+--- The Midi test program read the directory and parse all midi files.
+--- Then test the creation of midi events
 
 begin
 
@@ -187,6 +191,5 @@ begin
 
    Put_Line ("Midi Writing File ... ");
    TestMidiFileCreation;
-
 
 end Testmidi;

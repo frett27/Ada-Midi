@@ -23,58 +23,64 @@
 
 --  $Id: ais.ads,v 1.4 2003/09/30 05:48:30 frett Exp $
 
-
-
 with Ada.Unchecked_Deallocation;
-
 
 package body Midi is
 
+   ------------------------
+   -- Dispose_Byte_Array --
+   ------------------------
 
-   procedure Dispose_Byte_Array is
-      new Ada.Unchecked_Deallocation (Object => Byte_Array,
-                                      Name => Byte_Array_Access);
+   procedure Dispose_Byte_Array is new Ada.Unchecked_Deallocation
+     (Object => Byte_Array,
+      Name   => Byte_Array_Access);
 
+   --------------------------
+   -- ReadVarLengthNatural --
+   --------------------------
+
+   procedure ReadVarLengthNatural
+     (Ab    :        Byte_Array_Access;
+      Pos   : in out Natural;
+      Value :    out Natural)
+   is
+   begin
+      Value := 0;
+      loop
+         Value := Value * 128 + (Natural (Ab (Pos)) mod 128);
+         Pos   := Pos + 1;
+         exit when Ab (Pos - 1) < 128;
+      end loop;
+   end ReadVarLengthNatural;
+
+   ------------------
+   -- Word2Natural --
+   ------------------
 
    function Word2Natural (B1, B2 : Byte) return Natural is
    begin
       return Natural (B1) * 256 + Natural (B2);
    end Word2Natural;
 
-
-   procedure ReadVarLengthNatural (Ab : Byte_Array_Access;
-                                   Pos : in out Natural;
-                                   Value : out Natural) is
-   begin
-      Value := 0;
-      loop
-         Value := Value * 128 + (Natural (Ab (Pos)) mod 128);
-         Pos := Pos + 1;
-         exit when (Ab (Pos - 1) < 128);
-      end loop;
-   end ReadVarLengthNatural;
-
-
    -----------
    -- Parse --
    -----------
 
-   procedure Parse (C : in Chunk; EH : in Event_Handler) is
+   procedure Parse (C : Chunk; EH : Event_Handler) is
 
-      I : Natural := 1;
-      Ticks : Natural;
-      V : Natural;
+      I             : Natural := 1;
+      Ticks         : Natural;
+      V             : Natural;
       Runningstatus : Byte;
 
    begin
-
 
       --  Check Mtrk
       if C.ChunkType /= "MTrk" then
          raise Invalid_HeaderChunk;
       end if;
 
-      while (I < C.Length) loop
+      while I < C.Length loop
 
          --  Read Ticks, for tempo
          ReadVarLengthNatural (C.Data, I, V);
@@ -86,7 +92,7 @@ package body Midi is
             null;
          else
             Runningstatus := C.Data (I);
-            I := I + 1;
+            I             := I + 1;
          end if;
 
          case Runningstatus is
@@ -98,12 +104,12 @@ package body Midi is
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := NoteOFF;
-                  E.Ticks := Ticks;
+                  E.Cmd     := NoteOFF;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
                   --  Data are : note number, velocity
-                  E.Data := new Byte_Array'(1 => C.Data (I),
-                                            2 => C.Data (I + 1));
+                  E.Data :=
+                    new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then --   send event to the handler
                      EH (E);
                   end if;
@@ -117,12 +123,12 @@ package body Midi is
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := NoteON;
-                  E.Ticks := Ticks;
+                  E.Cmd     := NoteON;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
                   --  datas are: note number and velocity
-                  E.Data := new Byte_Array'(1 => C.Data (I),
-                                            2 => C.Data (I + 1));
+                  E.Data :=
+                    new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   --  if velocity is null, then it is a note off event
                   if C.Data (I + 1) = 0 then
                      E.Cmd := NoteOFF;
@@ -134,18 +140,17 @@ package body Midi is
                end;
                I := I + 2;
 
-
-            when 16#A0# .. 16#AF# => -- after touch
-               -- Text_IO.Put ("After touch ");
+            when 16#A0# .. 16#AF# => --  after touch
+               --  Text_IO.Put ("After touch ");
 
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := AfterTouch;
-                  E.Ticks := Ticks;
+                  E.Cmd     := AfterTouch;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
-                  E.Data := new Byte_Array'(1 => C.Data (I),
-                                            2 => C.Data (I + 1));
+                  E.Data    :=
+                    new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then -- send event to the handler
                      EH (E);
                   end if;
@@ -162,15 +167,16 @@ package body Midi is
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := ControlChange;
-                  E.Ticks := Ticks;
+                  E.Cmd     := ControlChange;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
 
                   case C.Data (I) is
                      when 16#0# .. 16#7F# =>
                         --  Text_Io.Put("Velocity " & Byte'Image(C.Data(I+1)));
-                        E.Data := new Byte_Array'(1 => C.Data (I),
-                                                  2 => C.Data (I + 1));
+                        E.Data :=
+                          new Byte_Array'
+                            (1 => C.Data (I), 2 => C.Data (I + 1));
                      when others =>
                         raise Invalid_Function;
                   end case;
@@ -182,8 +188,6 @@ package body Midi is
 
                end;
 
-
-
             when 16#C0# .. 16#CF# =>
                --       Text_Io.Put("Prg change "
                --         & Byte'Image( Runningstatus mod 16 ));
@@ -191,10 +195,10 @@ package body Midi is
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := ProgramChange;
-                  E.Ticks := Ticks;
+                  E.Cmd     := ProgramChange;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
-                  E.Data := new Byte_Array'(1 => C.Data (I));
+                  E.Data    := new Byte_Array'(1 => C.Data (I));
                   if EH /= null then -- send event to the handler
                      EH (E);
                   end if;
@@ -206,10 +210,10 @@ package body Midi is
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := ChannelAfterTouch;
-                  E.Ticks := Ticks;
+                  E.Cmd     := ChannelAfterTouch;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
-                  E.Data := new Byte_Array'(1 => C.Data (I));
+                  E.Data    := new Byte_Array'(1 => C.Data (I));
                   if EH /= null then --   send event to the handler
                      EH (E);
                   end if;
@@ -221,11 +225,11 @@ package body Midi is
                declare
                   E : Event (MIDIEvent);
                begin
-                  E.Cmd := PitchRange;
-                  E.Ticks := Ticks;
+                  E.Cmd     := PitchRange;
+                  E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
-                  E.Data := new Byte_Array'(1 => C.Data (I),
-                                            2 => C.Data (I + 1));
+                  E.Data    :=
+                    new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then -- send event to the handler
                      EH (E);
                   end if;
@@ -236,7 +240,6 @@ package body Midi is
                --               Text_IO.Put ("Function Not supported :" &
                --                           Byte'Image (Runningstatus));
                raise Event_Not_Supported;
-
 
             when 16#FF# => -- FF <Type> <Length>
                Runningstatus := 0;
@@ -258,8 +261,8 @@ package body Midi is
 
                   A (A'Range) := C.Data (I .. I + Integer (V) - 1);
 
-                  E.Data := A;
-                  E.ticks := Ticks;
+                  E.Data  := A;
+                  E.Ticks := Ticks;
                   if EH /= null then --   send event to the handler
                      EH (E);
                   end if;
@@ -267,93 +270,33 @@ package body Midi is
 
                end;
 
-
             when others =>
-               -- Text_IO.Put ("Unexpected Value " & Byte'Image (C.Data (I))
-               --              & " at offset " & Natural'Image (I));
-
-               raise event_not_supported;
+               raise Event_Not_Supported with "Unexpected Value "
+                 & Byte'Image (C.Data (I))
+                 & " at offset " & Natural'Image (I);
          end case;
 
       end loop;
    end Parse;
 
 
-
-   procedure Initialize (O : in out Event) is
-   begin
-      O.Data := null;
-   end Initialize;
-
-
-   procedure Finalize (O : in out Event)
-   is
-   begin
-      if O.Data /= null then
-         --  free event datas
-         Dispose_Byte_Array (O.Data);
-         O.Data := null;
-      end if;
-
-   end Finalize;
-
-
-   --  Adjusting event Extra Datas
-   procedure Adjust (O : in out Event)
-   is
-      A : Byte_Array_Access;
-   begin
-      --  copy data arrays
-      A := new Byte_Array (O.Data'Range);
-      A (A'Range) := O.Data (A'Range);
-      O.Data := A;
-   end Adjust;
-
-
-   --  Initialize events
-   procedure Initialize (O : in out Chunk)
-   is
-   begin
-      O.Data := null;
-   end Initialize;
-
-
-   procedure Adjust (O : in out Chunk)
-   is
-      A : Byte_Array_Access;
-   begin
-      --  copying data arrays
-      A := new Byte_Array (O.Data'Range);
-      A (A'Range) := O.Data (A'Range);
-      O.Data := A;
-   end Adjust;
-
-
-   --  Release event extra datas
-   procedure Finalize (O : in out Chunk) is
-   begin
-      if O.Data /= null then
-         Dispose_Byte_Array (O.Data);
-         O.Data := null;
-      end if;
-   end Finalize;
-
-
+   --------------
+   -- AddEvent --
+   --------------
    --  add an event to the chunk
-   procedure AddEvent (C : in out Chunk; E : in Event'class)
-   is
+   procedure AddEvent (C : in out Chunk; E : Event'Class) is
       B : Byte_Array := ToByteArray (E);
    begin
       --  Add Event in the chunk
       --  not implemented yet
-      if (C.Data = null) then
+      if C.Data = null then
          --  Text_IO.Put_Line ("Create a new buffer ");
          --  allocate a buffer
-         C.Data := new Byte_Array (1 .. 1024);
+         C.Data   := new Byte_Array (1 .. 1024);
          C.Length := 0;
       end if;
 
-      if (C.Length + B'Length > C.Data'Length) then
+      if C.Length + B'Length > C.Data'Length then
          --  must increase the buffer size
          declare
             --  double size
@@ -368,25 +311,166 @@ package body Midi is
       end if;
 
       --  add event at the end
-      C.Data (C.Length + 1 .. C.Length + B'Length) := B (1 .. B'Length) ;
-      C.Length := C.Length + B'Length;
+      C.Data (C.Length + 1 .. C.Length + B'Length) := B (1 .. B'Length);
+      C.Length                                     := C.Length + B'Length;
 
    end AddEvent;
 
 
-   --  Convert Natural tick, in Midi Coded Byte suite
-   function ToMidiTick (N : Natural) return Byte_Array
+   ------------
+   -- Adjust --
+   ------------
+   --  Adjusting event Extra Datas
+   procedure Adjust (O : in out Event) is
+      A : Byte_Array_Access;
+   begin
+      --  copy data arrays
+      A           := new Byte_Array (O.Data'Range);
+      A (A'Range) := O.Data (A'Range);
+      O.Data      := A;
+   end Adjust;
+
+   ------------
+   -- Adjust --
+   ------------
+
+   procedure Adjust (O : in out Chunk) is
+      A : Byte_Array_Access;
+   begin
+      --  copying data arrays
+      A           := new Byte_Array (O.Data'Range);
+      A (A'Range) := O.Data (A'Range);
+      O.Data      := A;
+   end Adjust;
+
+   ----------------------------
+   -- Create_EOF_Track_Event --
+   ----------------------------
+
+   function Create_EOF_Track_Event return Event is
+      Result : Event (MetaEvent);
+   begin
+      Result.Service := 16#2F#;
+      Result.Data    := new Midi.Byte_Array'(1 => 0);
+      return Result;
+   end Create_EOF_Track_Event;
+
+   -----------------------
+   -- Create_Note_Event --
+   -----------------------
+
+   function Create_Note_Event
+     (Ticks    : Natural;
+      Channel  : ChannelType;
+      Note     : Midi.Note;
+      Status   : Boolean; -- on/off
+      Velocity : Midi.Vel) return Event
    is
+      Result : Event (MIDIEvent);
+   begin
+      if Status then
+         Result.Cmd := NoteON;
+      else
+         Result.Cmd := NoteOFF;
+      end if;
+
+      Result.Channel := Channel;
+      Result.Ticks   := Ticks;
+      Result.Data    := new Midi.Byte_Array'(1 => Note, 2 => Velocity);
+
+      return Result;
+   end Create_Note_Event;
+
+   ---------------------------------
+   -- Create_Program_Change_Event --
+   ---------------------------------
+
+   function Create_Program_Change_Event
+     (Ticks      : Natural;
+      Channel    : ChannelType;
+      NewProgram : Byte) return Event
+   is
+      Result : Event (MIDIEvent);
+   begin
+      Result.Cmd     := ProgramChange;
+      Result.Channel := Channel;
+      Result.Ticks   := Ticks;
+      Result.Data    := new Midi.Byte_Array'(1 => NewProgram);
+      return Result;
+   end Create_Program_Change_Event;
+
+   ------------------------
+   -- Create_Tempo_Event --
+   ------------------------
+
+   function Create_Tempo_Event
+     (Ticks           : Natural;
+      MicroPerQuarter : Integer_24) return Event
+   is
+      Result : Event (MetaEvent);
+      B1     : Byte := Byte (MicroPerQuarter mod 256);
+      B2     : Byte := Byte ((MicroPerQuarter / 256) mod 256);
+      B3     : Byte := Byte (((MicroPerQuarter / 256) / 256) mod 256);
+   begin
+      Result.Ticks   := Ticks;
+      Result.Service := 16#51#;
+      Result.Data    :=
+        new Midi.Byte_Array'(1 => 16#03#, 2 => B3, 3 => B2, 4 => B1);
+
+      return Result;
+   end Create_Tempo_Event;
+
+
+   --------------
+   -- Finalize --
+   --------------
+   --  Release event extra datas
+
+   procedure Finalize (O : in out Chunk) is
+   begin
+      if O.Data /= null then
+         Dispose_Byte_Array (O.Data);
+         O.Data := null;
+      end if;
+   end Finalize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize (O : in out Event) is
+   begin
+      if O.Data /= null then
+         --  free event datas
+         Dispose_Byte_Array (O.Data);
+         O.Data := null;
+      end if;
+
+   end Finalize;
+
+   --  Initialize events
+   procedure Initialize (O : in out Chunk) is
+   begin
+      O.Data := null;
+   end Initialize;
+
+   procedure Initialize (O : in out Event) is
+   begin
+      O.Data := null;
+   end Initialize;
+
+   --  Convert Natural tick, in Midi Coded Byte suite
+   function ToMidiTick (N : Natural) return Byte_Array is
       ByteCount : Natural range 1 .. 100 := 1;
-      Result : Byte_Array (1 .. 10); -- MAX Bytes for 1 Number
-      K : Natural  := N;
-      Temp : Byte_Array (1 .. 10);
+      Result    : Byte_Array (1 .. 10); -- MAX Bytes for 1 Number
+      K         : Natural                := N;
+      Temp      : Byte_Array (1 .. 10);
    begin
 
       Temp (ByteCount) := Byte (K mod 128);
       while (K / 128) > 0 loop
-         K := K / 128;
-         ByteCount := ByteCount + 1;
+         K                := K / 128;
+         ByteCount        := ByteCount + 1;
          Temp (ByteCount) := Byte ((K mod 128) + 128);
       end loop;
       --  Reverse order
@@ -398,18 +482,16 @@ package body Midi is
 
    end ToMidiTick;
 
-
-
+   --  helper function for creating events
    --  Convert Event in Byte suite ..
-   function ToByteArray (O : in Event) return Byte_Array
-   is
+   function ToByteArray (O : Event) return Byte_Array is
       ByteCount : Natural range 1 .. 100 := 1;
-      Ticks : Byte_Array := ToMidiTick (O.Ticks); -- calculate midi ticks
-      Result : Byte_Array (1 .. 100); -- MAX Bytes for an event
+      Ticks     : Byte_Array := ToMidiTick (O.Ticks); -- calculate midi ticks
+      Result    : Byte_Array (1 .. 100); -- MAX Bytes for an event
    begin
 
       Result (Ticks'Range) := Ticks;
-      ByteCount := Ticks'Length;
+      ByteCount            := Ticks'Length;
 
       --  Ticks Added
 
@@ -440,7 +522,6 @@ package body Midi is
 
             end case;
 
-
          when MetaEvent =>
 
             ByteCount := Natural'Succ (ByteCount);
@@ -460,78 +541,5 @@ package body Midi is
       return Result (1 .. ByteCount) & O.Data.all;
 
    end ToByteArray;
-
-
-   --  helper function for creating events
-
-   function Create_Note_Event (Ticks : Natural;
-                              Channel : ChannelType;
-                              Note  : Midi.Note;
-                              Status : Boolean; -- on/off
-                              Velocity : Midi.Vel) return Event
-   is
-      Result : Event (MIDIEvent);
-   begin
-      if Status then
-         Result.Cmd := NoteON;
-      else
-         Result.Cmd := NoteOFF;
-      end if;
-
-      Result.Channel := Channel;
-      Result.Ticks := Ticks;
-      Result.Data := new Midi.Byte_Array'(1 => Note,
-                                          2 => Velocity);
-
-      return Result;
-   end Create_Note_Event;
-
-
-   function Create_EOF_Track_Event return Event
-   is
-      Result : Event (MetaEvent);
-   begin
-      Result.Service := 16#2F#;
-      Result.Data := new Midi.Byte_Array'(1 => 0);
-      return Result;
-   end Create_EOF_Track_Event;
-
-
-
-   function Create_Program_Change_Event(Ticks : Natural;
-                                        Channel : ChannelType;
-                                        NewProgram : Byte)
-                                       return Event
-   is
-      Result : Event (MIDIEvent);
-   begin
-      Result.Cmd := ProgramChange;
-      Result.Channel := Channel;
-      Result.Ticks := Ticks;
-      Result.Data := new Midi.Byte_Array'(1 => NewProgram);
-      return Result;
-   end;
-
-
-
-   function Create_Tempo_Event(Ticks : Natural;
-                               MicroPerQuarter : Integer_24)
-                              return Event is
-      Result : Event (MetaEvent);
-      B1 : Byte := Byte (Microperquarter mod 256);
-      B2 : Byte := Byte (( Microperquarter / 256 ) mod 256) ;
-      B3 : Byte := Byte ((( Microperquarter / 256 ) / 256 ) mod 256);
-   begin
-      Result.Ticks := Ticks;
-      Result.Service := 16#51#;
-      Result.Data := new Midi.Byte_Array'(1 => 16#03#,
-                                          2 => B3,
-                                          3 => B2,
-                                          4 => B1);
-
-      return Result;
-   end;
-
-
 
 end Midi;

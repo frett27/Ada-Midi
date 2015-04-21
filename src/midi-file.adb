@@ -1,4 +1,3 @@
-
 ------------------------------------------------------------------------------
 --                                 Ada Midi                                 --
 --                                                                          --
@@ -24,29 +23,45 @@
 
 --  $Id: ais.ads,v 1.4 2003/09/30 05:48:30 frett Exp $
 
-
 with Text_IO;
 with Ada.Unchecked_Deallocation;
 
 package body Midi.File is
 
-   --  Free Chunk array
-   procedure Dispose_Chunk_Array is
-      new Ada.Unchecked_Deallocation (Object => Chunk_Array,
-                                      Name => Chunk_Array_Access);
+   ------------
+   -- Adjust --
+   ------------
 
+   procedure Adjust (O : in out Midifile) is
+      C : Chunk_Array_Access := new Chunk_Array (O.Chunks'Range);
+   begin
+      C (O.Chunks'Range) := O.Chunks (O.Chunks'Range);
+      O.Chunks           := C;
+   end Adjust;
+
+
+   -------------------------
+   -- Dispose_Chunk_Array --
+   -------------------------
+   --  Free Chunk array
+
+   procedure Dispose_Chunk_Array is new Ada.Unchecked_Deallocation
+     (Object => Chunk_Array,
+      Name   => Chunk_Array_Access);
+
+
+   ----------------
+   -- Initialize --
+   ----------------
    --  Midi File Tagged Type definition
    procedure Initialize (O : in out Midifile) is
    begin
       O.Chunks := null;
    end Initialize;
 
-   procedure Adjust (O : in out Midifile) is
-      C : Chunk_Array_Access := new Chunk_Array (O.Chunks'Range);
-   begin
-      C (O.Chunks'Range) := O.Chunks (O.Chunks'Range);
-      O.Chunks := C;
-   end Adjust;
+   --------------
+   -- Finalize --
+   --------------
 
    procedure Finalize (O : in out Midifile) is
    begin
@@ -56,10 +71,13 @@ package body Midi.File is
       end if;
    end Finalize;
 
+   ----------------
+   -- Read4Bytes --
+   ----------------
 
    function Read4Bytes (F : SeqByte.File_Type) return Natural is
       Retval : Natural := 0;
-      B : Byte;
+      B      : Byte;
    begin
       SeqByte.Read (F, B);
       Retval := Natural (B);
@@ -75,26 +93,34 @@ package body Midi.File is
       return Retval;
    end Read4Bytes;
 
+
+   -----------------
+   -- Write4Bytes --
+   -----------------
    --  write the 4 bytes, natural number
-   procedure Write4Bytes (F : SeqByte.File_Type; N : in Natural) is
+
+   procedure Write4Bytes (F : SeqByte.File_Type; N : Natural) is
 
       Tab : Byte_Array (1 .. 4);
       Num : Natural := N;
    begin
       for I in 1 .. 4 loop
          Tab (I) := Byte (Num mod 256);
-         Num := Num / 256;
+         Num     := Num / 256;
       end loop;
       for I in reverse 1 .. 4 loop
          SeqByte.Write (F, Tab (I));
       end loop;
    end Write4Bytes;
 
+   ------------------
+   -- ReadRawChunk --
+   ------------------
 
    function ReadRawChunk (F : SeqByte.File_Type) return Chunk is
       Retval : Chunk;
-      B : Byte;
-      Size : Natural;
+      B      : Byte;
+      Size   : Natural;
    begin
       SeqByte.Read (F, B);
       Retval.ChunkType (1) := Character'Val (B);
@@ -106,9 +132,9 @@ package body Midi.File is
       Retval.ChunkType (4) := Character'Val (B);
 
       --  Read Size
-      Size := Read4Bytes (F);
+      Size        := Read4Bytes (F);
       Retval.Data := new Byte_Array (1 .. Size);
-      for I in  1 .. Size loop
+      for I in 1 .. Size loop
          SeqByte.Read (F, B);
          Retval.Data (I) := B;
       end loop;
@@ -117,8 +143,11 @@ package body Midi.File is
       return Retval;
    end ReadRawChunk;
 
+   -------------------
+   -- WriteRawChunk --
+   -------------------
 
-   procedure WriteRawChunk (F : in SeqByte.File_Type; C : in Chunk) is
+   procedure WriteRawChunk (F : SeqByte.File_Type; C : Chunk) is
    begin
 
       --  Write Chunk Type
@@ -134,21 +163,20 @@ package body Midi.File is
       end loop;
    end WriteRawChunk;
 
-
    ----------
    -- Read --
    ----------
    --  Read a midifile from disk..
-   function Read (FileName : in String) return Midifile is
-      M : Midifile;
-      F : SeqByte.File_Type;
-      C : Chunk;
+   function Read (FileName : String) return Midifile is
+      M  : Midifile;
+      F  : SeqByte.File_Type;
+      C  : Chunk;
       AC : Chunk_Array_Access;
    begin
       SeqByte.Open (F, SeqByte.In_File, FileName);
-      C := ReadRawChunk (F);
+      C    := ReadRawChunk (F);
       M.Hc := To_HeaderChunk (C);
-      AC := new Chunk_Array (1 .. M.Hc.Ntracks);
+      AC   := new Chunk_Array (1 .. M.Hc.Ntracks);
       for I in 1 .. M.Hc.Ntracks loop
          AC (I) := ReadRawChunk (F);
       end loop;
@@ -157,13 +185,11 @@ package body Midi.File is
       return M;
    end Read;
 
-
    --------------------
    -- Dump_To_Screen --
    --------------------
    --  Dump an event to the screen
-   procedure Dump_To_Screen (E : in Event)
-   is
+   procedure Dump_To_Screen (E : Event) is
 
       function Hex (B : Byte) return String is
          subtype HexValue is Byte range 0 .. 15;
@@ -181,8 +207,7 @@ package body Midi.File is
          return ReturnChar (B / 16) & ReturnChar (B mod 16);
       end Hex;
 
-
-      procedure Dump_Byte_Array (B : in Byte_Array) is
+      procedure Dump_Byte_Array (B : Byte_Array) is
       begin
          for I in B'Range loop
             Text_IO.Put (Hex (B (I)) & " ");
@@ -190,13 +215,14 @@ package body Midi.File is
       end Dump_Byte_Array;
 
    begin
-      F (" -- " & Natural'Image (E.Ticks)& ", ");
+      F (" -- " & Natural'Image (E.Ticks) & ", ");
       case E.ET is
          when MIDIEvent =>
-            F ("Midi Event "
-               & Midi.MidiCmd'Image (E.Cmd)
-               & " for channel "
-               & Midi.ChannelType'Image (E.Channel) & " -> ");
+            F ("Midi Event " &
+               Midi.MidiCmd'Image (E.Cmd) &
+               " for channel " &
+               Midi.ChannelType'Image (E.Channel) &
+               " -> ");
             Dump_Byte_Array (ToByteArray (E));
          when MetaEvent =>
             F ("Meta Event " & Hex (E.Service) & "--");
@@ -207,19 +233,16 @@ package body Midi.File is
 
    end Dump_To_Screen;
 
-
-
    -----------
    -- Write --
    -----------
    --  Write a midi file to disk
-   procedure Write (M : in Midifile; FileName : in String) is
+   procedure Write (M : Midifile; FileName : String) is
       F : SeqByte.File_Type;
    begin
 
       SeqByte.Create (File => F, Name => FileName);
       --  Write Header Chunk
-
 
       WriteRawChunk (F, To_Chunk (M.Hc));
       for I in 1 .. M.Hc.Ntracks loop
@@ -229,29 +252,23 @@ package body Midi.File is
       SeqByte.Close (F);
    end Write;
 
-
-
    --------------
    -- GetChunk --
    --------------
    --  get a chunk from the file
-   function GetChunk (M : in Midifile; I : in Natural) return Chunk
-   is
+   function GetChunk (M : Midifile; I : Natural) return Chunk is
    begin
       return M.Chunks (I);
    end GetChunk;
-
 
    -------------------
    -- GetTrackCount --
    -------------------
    --  Return the number of tracks in midifile
-   function GetTrackCount (M : in Midifile) return Natural
-   is
+   function GetTrackCount (M : Midifile) return Natural is
    begin
       return M.Chunks'Length;
    end GetTrackCount;
-
 
    --------------------
    -- To_HeaderChunk --
@@ -273,13 +290,12 @@ package body Midi.File is
       return Hc;
    end To_HeaderChunk;
 
-
    function To_Chunk (H : HeaderChunk) return Chunk is
       C : Chunk;
    begin
       C.ChunkType := "MThd";
-      C.Data := new Byte_Array (1 .. 6);
-      C.Length := 6;
+      C.Data      := new Byte_Array (1 .. 6);
+      C.Length    := 6;
 
       C.Data (1) := Byte (H.Format / 256);
       C.Data (2) := Byte (H.Format mod 256);
@@ -294,23 +310,24 @@ package body Midi.File is
    end To_Chunk;
 
 
+   --------------
+   -- AddChunk --
+   --------------
    --  Add a chunk to the current midifile
-   procedure AddChunk (M : in out Midifile; C : Chunk)
-   is
+   procedure AddChunk (M : in out Midifile; C : Chunk) is
    begin
       if M.Chunks = null then
-         M.Chunks := new Chunk_Array (1 .. 1);
+         M.Chunks     := new Chunk_Array (1 .. 1);
          M.Chunks (1) := C;
          M.Hc.Ntracks := 1;
       else
          declare
-            N : Chunk_Array_Access :=
-              new Chunk_Array (1 .. M.Chunks'Last + 1);
+            N : Chunk_Array_Access := new Chunk_Array (1 .. M.Chunks'Last + 1);
          begin
             N (1 .. M.Chunks'Last) := M.Chunks (M.Chunks'Range);
-            N (N'Last) := C;
+            N (N'Last)             := C;
             Dispose_Chunk_Array (M.Chunks);
-            M.Chunks := N;
+            M.Chunks     := N;
             M.Hc.Ntracks := N'Last;
          end;
       end if;
