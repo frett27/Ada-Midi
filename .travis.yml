@@ -10,7 +10,7 @@ before_install:
 # To test that travis can pass a build
 # script: ./scripts/exit-true.sh
 
-# script: ./scripts/run-tests.sh
+script: make 
 
 notifications:
   email: false
