@@ -1,0 +1,14 @@
+# c is the closest to Ada
+language: c
+
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq gnat libaunit2-dev
+
+# To test that travis can pass a build
+# script: ./scripts/exit-true.sh
+
+# script: ./scripts/run-tests.sh
+
+notifications:
+  email: false
