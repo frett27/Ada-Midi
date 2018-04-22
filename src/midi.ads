@@ -48,6 +48,11 @@ package Midi is
       ChannelAfterTouch,
       PitchRange);
 
+   type MetaEventService is
+     (TimeSignature,
+      Tempo,
+      Unknown);
+
    type ChannelType is range 0 .. 15;
 
    type Integer_24 is range 0 .. 2**24 - 1;
@@ -61,6 +66,9 @@ package Midi is
             Channel : ChannelType;
             Cmd     : MidiCmd;
          when MetaEvent =>  -- FF Messages
+            MetaService : MetaEventService;
+            -- in case the metaevent service is unknown, the service
+            -- is populated with the First data byte
             Service : Byte;
          when SysEvent =>  -- F0 F7 Messages
             null;
@@ -114,6 +122,13 @@ package Midi is
      (Ticks      : Natural;
       Channel    : ChannelType;
       NewProgram : Byte) return Event;
+
+   -- Utility functions
+   procedure ReadFixedNatural
+     (Ab    :         Byte_Array_Access;
+      Pos   :  in out Natural;
+      Size  :  in     Natural;
+      Value :     out Natural);
 
 private
 

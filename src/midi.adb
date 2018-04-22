@@ -53,6 +53,26 @@ package body Midi is
       end loop;
    end ReadVarLengthNatural;
 
+   --------------------------
+   -- ReadFixedNatural --
+   --------------------------
+
+   procedure ReadFixedNatural
+     (Ab    :         Byte_Array_Access;
+      Pos   :  in out Natural;
+      Size  :  in     Natural;
+      Value :     out Natural)
+   is
+      LeftToRead : Natural := Size;
+   begin
+      Value := 0;
+      while LeftToRead >= 1 loop
+         Value := Value * 256 + Natural (Ab (Pos)) ;
+         Pos   := Pos + 1;
+         LeftToRead := Natural'Pred(LeftToRead);
+      end loop;
+   end ReadFixedNatural;
+
    ------------------
    -- Word2Natural --
    ------------------
@@ -252,6 +272,15 @@ package body Midi is
                begin
 
                   E.Service := C.Data (I);
+                  case E.Service is
+                     when 16#58# =>
+                        E.MetaService := TimeSignature;
+                     when 16#51# =>
+                        E.MetaService := Tempo;
+                     when others =>
+                        E.MetaService := Unknown;
+                  end case;
+
 
                   I := I + 1;
 

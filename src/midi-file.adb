@@ -117,7 +117,8 @@ package body Midi.File is
    -- ReadRawChunk --
    ------------------
 
-   function ReadRawChunk (F : SeqByte.File_Type) return Chunk is
+   function ReadRawChunk (F : SeqByte.File_Type)
+                          return Chunk is
       Retval : Chunk;
       B      : Byte;
       Size   : Natural;
@@ -225,7 +226,8 @@ package body Midi.File is
                " -> ");
             Dump_Byte_Array (ToByteArray (E));
          when MetaEvent =>
-            F ("Meta Event " & Hex (E.Service) & "--");
+            F ("Meta Event " & MetaEventService'Image(E.MetaService)
+               & "->" & Hex (E.Service) & "--");
             Dump_Byte_Array (ToByteArray (E));
          when SysEvent =>
             null;
