@@ -60,16 +60,16 @@ package body Midi is
    procedure ReadFixedNatural
      (Ab    :         Byte_Array_Access;
       Pos   :  in out Natural;
-      Size  :  in     Natural;
+      Size  :         Natural;
       Value :     out Natural)
    is
       LeftToRead : Natural := Size;
    begin
       Value := 0;
       while LeftToRead >= 1 loop
-         Value := Value * 256 + Natural (Ab (Pos)) ;
+         Value := Value * 256 + Natural (Ab (Pos));
          Pos   := Pos + 1;
-         LeftToRead := Natural'Pred(LeftToRead);
+         LeftToRead := Natural'Pred (LeftToRead);
       end loop;
    end ReadFixedNatural;
 
@@ -82,12 +82,25 @@ package body Midi is
       return Natural (B1) * 256 + Natural (B2);
    end Word2Natural;
 
+    -----------
+   -- Parse --
+   -----------
+
+   procedure Parse (C : Chunk;
+                    EH : Event_Handler) is
+   begin
+      Parse (C  => C,
+             EH => EH,
+             Error_Handler => null);
+   end Parse;
+
    -----------
    -- Parse --
    -----------
 
-   procedure Parse (C : Chunk; EH : Event_Handler) is
-
+   procedure Parse (C : Chunk;
+                    EH : Event_Handler;
+                    Error_Handler : Error_Handler_Procedure_Access) is
       I             : Natural := 1;
       Ticks         : Natural;
       V             : Natural;
@@ -131,7 +144,14 @@ package body Midi is
                   E.Data :=
                     new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then --   send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
                end;
                I := I + 2;
@@ -155,7 +175,14 @@ package body Midi is
                   end if;
 
                   if EH /= null then --   send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
                end;
                I := I + 2;
@@ -172,7 +199,14 @@ package body Midi is
                   E.Data    :=
                     new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then -- send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
 
                end;
@@ -203,7 +237,14 @@ package body Midi is
                   I := I + 2; --  2 bytes data
 
                   if EH /= null then --   send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
 
                end;
@@ -220,7 +261,14 @@ package body Midi is
                   E.Channel := ChannelType (Runningstatus mod 16);
                   E.Data    := new Byte_Array'(1 => C.Data (I));
                   if EH /= null then -- send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
                end;
                I := I + 1;
@@ -235,7 +283,14 @@ package body Midi is
                   E.Channel := ChannelType (Runningstatus mod 16);
                   E.Data    := new Byte_Array'(1 => C.Data (I));
                   if EH /= null then --   send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
                end;
                I := I + 1;
@@ -251,7 +306,14 @@ package body Midi is
                   E.Data    :=
                     new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then -- send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
                end;
                I := I + 2;
@@ -281,7 +343,6 @@ package body Midi is
                         E.MetaService := Unknown;
                   end case;
 
-
                   I := I + 1;
 
                   ReadVarLengthNatural (C.Data, I, V);
@@ -293,7 +354,14 @@ package body Midi is
                   E.Data  := A;
                   E.Ticks := Ticks;
                   if EH /= null then --   send event to the handler
-                     EH (E);
+                     begin
+                        EH (E);
+                     exception
+                        when Error : others =>
+                           if Error_Handler /= null then
+                              Error_Handler (Error);
+                           end if;
+                     end;
                   end if;
                   I := I + Integer (V);
 
@@ -307,7 +375,6 @@ package body Midi is
 
       end loop;
    end Parse;
-
 
    --------------
    -- AddEvent --
@@ -344,7 +411,6 @@ package body Midi is
       C.Length                                     := C.Length + B'Length;
 
    end AddEvent;
-
 
    ------------
    -- Adjust --
@@ -448,7 +514,6 @@ package body Midi is
 
       return Result;
    end Create_Tempo_Event;
-
 
    --------------
    -- Finalize --

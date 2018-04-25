@@ -39,7 +39,6 @@ package body Midi.File is
       O.Chunks           := C;
    end Adjust;
 
-
    -------------------------
    -- Dispose_Chunk_Array --
    -------------------------
@@ -48,7 +47,6 @@ package body Midi.File is
    procedure Dispose_Chunk_Array is new Ada.Unchecked_Deallocation
      (Object => Chunk_Array,
       Name   => Chunk_Array_Access);
-
 
    ----------------
    -- Initialize --
@@ -92,7 +90,6 @@ package body Midi.File is
       Retval := Retval + Natural (B);
       return Retval;
    end Read4Bytes;
-
 
    -----------------
    -- Write4Bytes --
@@ -226,7 +223,7 @@ package body Midi.File is
                " -> ");
             Dump_Byte_Array (ToByteArray (E));
          when MetaEvent =>
-            F ("Meta Event " & MetaEventService'Image(E.MetaService)
+            F ("Meta Event " & MetaEventService'Image (E.MetaService)
                & "->" & Hex (E.Service) & "--");
             Dump_Byte_Array (ToByteArray (E));
          when SysEvent =>
@@ -310,7 +307,6 @@ package body Midi.File is
 
       return C;
    end To_Chunk;
-
 
    --------------
    -- AddChunk --

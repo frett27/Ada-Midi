@@ -24,6 +24,7 @@
 --  $Id: ais.ads,v 1.4 2003/09/30 05:48:30 frett Exp $
 
 with Ada.Finalization;
+with Ada.Exceptions;
 
 package Midi is
 
@@ -67,8 +68,8 @@ package Midi is
             Cmd     : MidiCmd;
          when MetaEvent =>  -- FF Messages
             MetaService : MetaEventService;
-            -- in case the metaevent service is unknown, the service
-            -- is populated with the First data byte
+            --  in case the metaevent service is unknown, the service
+            --  is populated with the First data byte
             Service : Byte;
          when SysEvent =>  -- F0 F7 Messages
             null;
@@ -85,7 +86,18 @@ package Midi is
    --  Parse a Chunk, and send events to the Event_handler
    --  if Event_handler is null, parse is done, but handler is
    --  not called.
-   procedure Parse (C : Chunk; EH : Event_Handler);
+   procedure Parse (C : Chunk;
+                    EH : Event_Handler);
+
+   type Error_Handler_Procedure_Access is access
+        procedure (E : Ada.Exceptions.Exception_Occurrence);
+
+   --  Parse a Chunk, and behave as above,
+   --  this function takes an error handler to be called
+   --  in case the event handler raise an exception
+   procedure Parse (C : Chunk;
+                    EH : Event_Handler;
+                    Error_Handler : Error_Handler_Procedure_Access);
 
    --  Managing chunck structure
    procedure Initialize (O : in out Chunk);
@@ -123,11 +135,11 @@ package Midi is
       Channel    : ChannelType;
       NewProgram : Byte) return Event;
 
-   -- Utility functions
+   --  Utility functions
    procedure ReadFixedNatural
      (Ab    :         Byte_Array_Access;
       Pos   :  in out Natural;
-      Size  :  in     Natural;
+      Size  :         Natural;
       Value :     out Natural);
 
 private
