@@ -331,4 +331,15 @@ package body Midi.File is
       end if;
    end AddChunk;
 
+   ------------------
+   -- Get_Division --
+   ------------------
+   function Get_Division(M : Midifile) return Natural
+   is
+   begin
+      return M.Hc.Division;
+   end;
+
+
+
 end Midi.File;

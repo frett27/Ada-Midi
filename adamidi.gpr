@@ -2,7 +2,7 @@
 Library project Adamidi is
 
    type Os_Type is
-      ("Any", "Linux","Windows");
+      ("Any", "GNU/Linux","Windows");
    Os : Os_Type := external ("ADAMIDI", "Any");
 
    for source_dirs use ("src");
@@ -19,14 +19,14 @@ Library project Adamidi is
    case Os is
       when "Windows" =>
          for library_version use "libadamidi" & Version & ".dll" ;
-      when "Linux" =>
+      when "GNU/Linux" =>
          for library_version use "libadamidi.so." & Version;
       when "Any" =>
          for library_version use "libadamidi.so." & Version;
    end case;
 
    package Compiler is
-        for Default_Switches("Ada") use ("-gnatyaAbBcefhiIklnprSmtux", "-gnat05");
+        for Default_Switches("Ada") use ("-gnatyaAbBcefhiIklnprSmtux");
    end Compiler;
 
    package Binder is

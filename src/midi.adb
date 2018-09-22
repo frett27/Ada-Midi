@@ -24,6 +24,7 @@
 --  $Id: ais.ads,v 1.4 2003/09/30 05:48:30 frett Exp $
 
 with Ada.Unchecked_Deallocation;
+with Ada.Text_IO;
 
 package body Midi is
 
@@ -334,12 +335,16 @@ package body Midi is
                begin
 
                   E.Service := C.Data (I);
+
                   case E.Service is
                      when 16#58# =>
                         E.MetaService := TimeSignature;
+
                      when 16#51# =>
                         E.MetaService := Tempo;
+
                      when others =>
+                        Ada.Text_IO.Put_Line("unknown Service :"  & Byte'Image(E.Service));
                         E.MetaService := Unknown;
                   end case;
 
