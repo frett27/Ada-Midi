@@ -42,8 +42,8 @@ package Midi.File is
    --  Write a midifile
    procedure Write (M : Midifile; FileName : String);
 
-   -- read the division for the file
-   function Get_Division(M : Midifile) return Natural;
+   --  Read the division for the file
+   function Get_Division (M : Midifile) return Natural;
 
    --  Get a Chunk from a midifile (Track)
    function GetChunk (M : Midifile; I : Natural) return Chunk;

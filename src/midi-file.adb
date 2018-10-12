@@ -334,12 +334,10 @@ package body Midi.File is
    ------------------
    -- Get_Division --
    ------------------
-   function Get_Division(M : Midifile) return Natural
+   function Get_Division (M : Midifile) return Natural
    is
    begin
       return M.Hc.Division;
-   end;
-
-
+   end Get_Division;
 
 end Midi.File;
