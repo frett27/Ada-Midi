@@ -40,13 +40,8 @@ package Midi is
    type EventType is (MIDIEvent, MetaEvent, SysEvent);
 
    type MidiCmd is
-     (NoteON,
-      NoteOFF,
-      AfterTouch,
-      ControlChange,
-      ProgramChange,
-      ChannelAfterTouch,
-      PitchRange);
+     (NoteON, NoteOFF, AfterTouch, ControlChange, ProgramChange,
+      ChannelAfterTouch, PitchRange);
 
    type ChannelType is range 0 .. 15;
 
@@ -70,8 +65,8 @@ package Midi is
    type Event_Handler is access procedure (E : Event);
 
    Invalid_HeaderChunk : exception;
-   Invalid_Function : exception;
-   Invalid_Track : exception;
+   Invalid_Function    : exception;
+   Invalid_Track       : exception;
    Event_Not_Supported : exception;
 
    --  Parse a Chunk, and send events to the Event_handler
@@ -98,22 +93,17 @@ package Midi is
 
    --  event creation helper methods
    function Create_Note_Event
-     (Ticks    : Natural;
-      Channel  : ChannelType;
-      Note     : Midi.Note;
+     (Ticks    : Natural; Channel : ChannelType; Note : Midi.Note;
       Status   : Boolean; -- on/off
       Velocity : Midi.Vel) return Event;
 
    function Create_EOF_Track_Event return Event;
 
    function Create_Tempo_Event
-     (Ticks           : Natural;
-      MicroPerQuarter : Integer_24) return Event;
+     (Ticks : Natural; MicroPerQuarter : Integer_24) return Event;
 
    function Create_Program_Change_Event
-     (Ticks      : Natural;
-      Channel    : ChannelType;
-      NewProgram : Byte) return Event;
+     (Ticks : Natural; Channel : ChannelType; NewProgram : Byte) return Event;
 
 private
 

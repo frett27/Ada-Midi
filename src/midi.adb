@@ -32,17 +32,14 @@ package body Midi is
    ------------------------
 
    procedure Dispose_Byte_Array is new Ada.Unchecked_Deallocation
-     (Object => Byte_Array,
-      Name   => Byte_Array_Access);
+     (Object => Byte_Array, Name => Byte_Array_Access);
 
    --------------------------
    -- ReadVarLengthNatural --
    --------------------------
 
    procedure ReadVarLengthNatural
-     (Ab    :        Byte_Array_Access;
-      Pos   : in out Natural;
-      Value :    out Natural)
+     (Ab : Byte_Array_Access; Pos : in out Natural; Value : out Natural)
    is
    begin
       Value := 0;
@@ -108,7 +105,7 @@ package body Midi is
                   E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
                   --  Data are : note number, velocity
-                  E.Data :=
+                  E.Data    :=
                     new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   if EH /= null then --   send event to the handler
                      EH (E);
@@ -127,7 +124,7 @@ package body Midi is
                   E.Ticks   := Ticks;
                   E.Channel := ChannelType (Runningstatus mod 16);
                   --  datas are: note number and velocity
-                  E.Data :=
+                  E.Data    :=
                     new Byte_Array'(1 => C.Data (I), 2 => C.Data (I + 1));
                   --  if velocity is null, then it is a note off event
                   if C.Data (I + 1) = 0 then
@@ -271,14 +268,13 @@ package body Midi is
                end;
 
             when others =>
-               raise Event_Not_Supported with "Unexpected Value "
-                 & Byte'Image (C.Data (I))
-                 & " at offset " & Natural'Image (I);
+               raise Event_Not_Supported
+                 with "Unexpected Value " & Byte'Image (C.Data (I)) &
+                 " at offset " & Natural'Image (I);
          end case;
 
       end loop;
    end Parse;
-
 
    --------------
    -- AddEvent --
@@ -292,7 +288,7 @@ package body Midi is
       if C.Data = null then
          --  Text_IO.Put_Line ("Create a new buffer ");
          --  allocate a buffer
-         C.Data   := new Byte_Array (1 .. 1024);
+         C.Data   := new Byte_Array (1 .. 1_024);
          C.Length := 0;
       end if;
 
@@ -315,7 +311,6 @@ package body Midi is
       C.Length                                     := C.Length + B'Length;
 
    end AddEvent;
-
 
    ------------
    -- Adjust --
@@ -360,9 +355,7 @@ package body Midi is
    -----------------------
 
    function Create_Note_Event
-     (Ticks    : Natural;
-      Channel  : ChannelType;
-      Note     : Midi.Note;
+     (Ticks    : Natural; Channel : ChannelType; Note : Midi.Note;
       Status   : Boolean; -- on/off
       Velocity : Midi.Vel) return Event
    is
@@ -386,9 +379,7 @@ package body Midi is
    ---------------------------------
 
    function Create_Program_Change_Event
-     (Ticks      : Natural;
-      Channel    : ChannelType;
-      NewProgram : Byte) return Event
+     (Ticks : Natural; Channel : ChannelType; NewProgram : Byte) return Event
    is
       Result : Event (MIDIEvent);
    begin
@@ -404,8 +395,7 @@ package body Midi is
    ------------------------
 
    function Create_Tempo_Event
-     (Ticks           : Natural;
-      MicroPerQuarter : Integer_24) return Event
+     (Ticks : Natural; MicroPerQuarter : Integer_24) return Event
    is
       Result : Event (MetaEvent);
       B1     : Byte := Byte (MicroPerQuarter mod 256);
@@ -419,7 +409,6 @@ package body Midi is
 
       return Result;
    end Create_Tempo_Event;
-
 
    --------------
    -- Finalize --

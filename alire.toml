@@ -1,0 +1,10 @@
+name = "adamidi"
+description = "Ada Midi Parser and Writer"
+version = "0.1.0-dev"
+
+authors = ["Patrice Freydiere"]
+maintainers = ["Patrice Freydiere <frett27@gmail.com>"]
+maintainers-logins = ["frett27"]
+licenses = "MIT"
+website = ""
+tags = ["midi", "file", "ada"]

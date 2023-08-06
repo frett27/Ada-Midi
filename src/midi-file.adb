@@ -39,16 +39,13 @@ package body Midi.File is
       O.Chunks           := C;
    end Adjust;
 
-
    -------------------------
    -- Dispose_Chunk_Array --
    -------------------------
    --  Free Chunk array
 
    procedure Dispose_Chunk_Array is new Ada.Unchecked_Deallocation
-     (Object => Chunk_Array,
-      Name   => Chunk_Array_Access);
-
+     (Object => Chunk_Array, Name => Chunk_Array_Access);
 
    ----------------
    -- Initialize --
@@ -92,7 +89,6 @@ package body Midi.File is
       Retval := Retval + Natural (B);
       return Retval;
    end Read4Bytes;
-
 
    -----------------
    -- Write4Bytes --
@@ -218,11 +214,8 @@ package body Midi.File is
       F (" -- " & Natural'Image (E.Ticks) & ", ");
       case E.ET is
          when MIDIEvent =>
-            F ("Midi Event " &
-               Midi.MidiCmd'Image (E.Cmd) &
-               " for channel " &
-               Midi.ChannelType'Image (E.Channel) &
-               " -> ");
+            F ("Midi Event " & Midi.MidiCmd'Image (E.Cmd) & " for channel " &
+               Midi.ChannelType'Image (E.Channel) & " -> ");
             Dump_Byte_Array (ToByteArray (E));
          when MetaEvent =>
             F ("Meta Event " & Hex (E.Service) & "--");
@@ -282,9 +275,9 @@ package body Midi.File is
          raise Invalid_HeaderChunk;
       end if;
       --  get format
-      Hc.Format := Word2Natural (C.Data (1), C.Data (2));
+      Hc.Format   := Word2Natural (C.Data (1), C.Data (2));
       --  get ntracks
-      Hc.Ntracks := Word2Natural (C.Data (3), C.Data (4));
+      Hc.Ntracks  := Word2Natural (C.Data (3), C.Data (4));
       --  get divisions
       Hc.Division := Word2Natural (C.Data (5), C.Data (6));
       return Hc;
@@ -308,7 +301,6 @@ package body Midi.File is
 
       return C;
    end To_Chunk;
-
 
    --------------
    -- AddChunk --
