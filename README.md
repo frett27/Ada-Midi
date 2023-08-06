@@ -1,10 +1,7 @@
 Ada-Midi
 ========
 
-![](https://travis-ci.org/frett27/Ada-Midi.svg)
-
 *Patrice Freydiere - 2003 - Avril 2015*
-
 
 
 Implementation of Midi / MidiFile reading and writing, event generation.
