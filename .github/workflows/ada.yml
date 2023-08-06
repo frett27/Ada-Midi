@@ -1,0 +1,22 @@
+name: Ada (GNAT)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - uses: alire-project/setup-alire@v2
+      with:
+        branch: "master" # or the branch you want to use
+
+    - run: alr build
