@@ -24,6 +24,7 @@
 --  $Id: ais.ads,v 1.4 2003/09/30 05:48:30 frett Exp $
 
 with Ada.Finalization;
+with Ada.Exceptions;
 
 package Midi is
 
@@ -40,8 +41,18 @@ package Midi is
    type EventType is (MIDIEvent, MetaEvent, SysEvent);
 
    type MidiCmd is
-     (NoteON, NoteOFF, AfterTouch, ControlChange, ProgramChange,
-      ChannelAfterTouch, PitchRange);
+     (NoteON,
+      NoteOFF,
+      AfterTouch,
+      ControlChange,
+      ProgramChange,
+      ChannelAfterTouch,
+      PitchRange);
+
+   type MetaEventService is
+     (TimeSignature,
+      Tempo,
+      Unknown);
 
    type ChannelType is range 0 .. 15;
 
@@ -56,6 +67,9 @@ package Midi is
             Channel : ChannelType;
             Cmd     : MidiCmd;
          when MetaEvent =>  -- FF Messages
+            MetaService : MetaEventService;
+            --  in case the metaevent service is unknown, the service
+            --  is populated with the First data byte
             Service : Byte;
          when SysEvent =>  -- F0 F7 Messages
             null;
@@ -65,14 +79,25 @@ package Midi is
    type Event_Handler is access procedure (E : Event);
 
    Invalid_HeaderChunk : exception;
-   Invalid_Function    : exception;
-   Invalid_Track       : exception;
+   Invalid_Function : exception;
+   Invalid_Track : exception;
    Event_Not_Supported : exception;
 
    --  Parse a Chunk, and send events to the Event_handler
    --  if Event_handler is null, parse is done, but handler is
    --  not called.
-   procedure Parse (C : Chunk; EH : Event_Handler);
+   procedure Parse (C : Chunk;
+                    EH : Event_Handler);
+
+   type Error_Handler_Procedure_Access is access
+        procedure (E : Ada.Exceptions.Exception_Occurrence);
+
+   --  Parse a Chunk, and behave as above,
+   --  this function takes an error handler to be called
+   --  in case the event handler raise an exception
+   procedure Parse (C : Chunk;
+                    EH : Event_Handler;
+                    Error_Handler : Error_Handler_Procedure_Access);
 
    --  Managing chunck structure
    procedure Initialize (O : in out Chunk);
@@ -93,17 +118,29 @@ package Midi is
 
    --  event creation helper methods
    function Create_Note_Event
-     (Ticks    : Natural; Channel : ChannelType; Note : Midi.Note;
+     (Ticks    : Natural;
+      Channel  : ChannelType;
+      Note     : Midi.Note;
       Status   : Boolean; -- on/off
       Velocity : Midi.Vel) return Event;
 
    function Create_EOF_Track_Event return Event;
 
    function Create_Tempo_Event
-     (Ticks : Natural; MicroPerQuarter : Integer_24) return Event;
+     (Ticks           : Natural;
+      MicroPerQuarter : Integer_24) return Event;
 
    function Create_Program_Change_Event
-     (Ticks : Natural; Channel : ChannelType; NewProgram : Byte) return Event;
+     (Ticks      : Natural;
+      Channel    : ChannelType;
+      NewProgram : Byte) return Event;
+
+   --  Utility functions
+   procedure ReadFixedNatural
+     (Ab    :         Byte_Array_Access;
+      Pos   :  in out Natural;
+      Size  :         Natural;
+      Value :     out Natural);
 
 private
 

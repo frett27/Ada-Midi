@@ -45,7 +45,8 @@ package body Midi.File is
    --  Free Chunk array
 
    procedure Dispose_Chunk_Array is new Ada.Unchecked_Deallocation
-     (Object => Chunk_Array, Name => Chunk_Array_Access);
+     (Object => Chunk_Array,
+      Name   => Chunk_Array_Access);
 
    ----------------
    -- Initialize --
@@ -113,7 +114,8 @@ package body Midi.File is
    -- ReadRawChunk --
    ------------------
 
-   function ReadRawChunk (F : SeqByte.File_Type) return Chunk is
+   function ReadRawChunk (F : SeqByte.File_Type)
+                          return Chunk is
       Retval : Chunk;
       B      : Byte;
       Size   : Natural;
@@ -214,11 +216,15 @@ package body Midi.File is
       F (" -- " & Natural'Image (E.Ticks) & ", ");
       case E.ET is
          when MIDIEvent =>
-            F ("Midi Event " & Midi.MidiCmd'Image (E.Cmd) & " for channel " &
-               Midi.ChannelType'Image (E.Channel) & " -> ");
+            F ("Midi Event " &
+               Midi.MidiCmd'Image (E.Cmd) &
+               " for channel " &
+               Midi.ChannelType'Image (E.Channel) &
+               " -> ");
             Dump_Byte_Array (ToByteArray (E));
          when MetaEvent =>
-            F ("Meta Event " & Hex (E.Service) & "--");
+            F ("Meta Event " & MetaEventService'Image (E.MetaService)
+               & "->" & Hex (E.Service) & "--");
             Dump_Byte_Array (ToByteArray (E));
          when SysEvent =>
             null;
@@ -275,9 +281,9 @@ package body Midi.File is
          raise Invalid_HeaderChunk;
       end if;
       --  get format
-      Hc.Format   := Word2Natural (C.Data (1), C.Data (2));
+      Hc.Format := Word2Natural (C.Data (1), C.Data (2));
       --  get ntracks
-      Hc.Ntracks  := Word2Natural (C.Data (3), C.Data (4));
+      Hc.Ntracks := Word2Natural (C.Data (3), C.Data (4));
       --  get divisions
       Hc.Division := Word2Natural (C.Data (5), C.Data (6));
       return Hc;
@@ -324,5 +330,14 @@ package body Midi.File is
          end;
       end if;
    end AddChunk;
+
+   ------------------
+   -- Get_Division --
+   ------------------
+   function Get_Division (M : Midifile) return Natural
+   is
+   begin
+      return M.Hc.Division;
+   end Get_Division;
 
 end Midi.File;
