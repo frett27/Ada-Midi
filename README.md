@@ -18,3 +18,5 @@ This project should compile on every Ada 2005 compliant compiler.We currently us
 to compile the project, go in the project directory and launch gprbuild command line.
 
 > gprbuild
+
+Alire is also available for compiling, and as local packet manager
